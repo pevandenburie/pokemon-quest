@@ -329,6 +329,52 @@ local function Player(x,y)
 end
 
 
+------------------------------------------
+-- Static Item class
+local function StaticItem(x,y,anim,tag)
+	local s={
+		tag=tag or "staticItem",
+		x=x or 0,
+		y=y or 0,
+		alpha=8,
+		curAnim=anim,  -- [] only one anim
+		visible=true,
+		flip=false
+	}
+
+	function s.Update(time)
+		-- detect if we are in the camera bounds
+		s.visible=s.x>=cam.x and s.x<=cam.x+CAM_W-CELL and s.y>=cam.y and s.y<=cam.y+CAM_H-CELL
+		
+		-- do something at the end of the animation
+		-- int the case of the mob stop to stay in particular states
+		-- if s.curAnim~=nil and s.curAnim.ended then
+		-- 	-- s.died=false
+		-- 	s.attack=false
+		-- 	s.damaged=false
+		-- end
+	end
+
+	function s.Display(time)
+		if s.curAnim==nil then return end
+		s.curAnim.Update(time)
+		local x=(s.x-cam.x)%CAM_W
+		local y=(s.y-cam.y)%CAM_H
+		if s.visible then
+			trace("Show "..s.tag.." anim "..s.curAnim.frame)
+			spr(s.curAnim.frame,x,y,s.alpha,1,s.flip,0,2,2)
+			-- rectb(x,y,CELL,CELL,14)
+		end
+	end
+
+	return s
+end
+
+local function SpawnPikachu(stable,cellX,cellY)
+	local anim=Anim(20,{268})
+	table.insert(stable, StaticItem(cellX*CELL,cellY*CELL,anim,"Pikachu"))
+end
+
 -- init
 local p1
 
@@ -345,6 +391,9 @@ local function Init()
 	
 	-- create player
 	p1=Player(8*CELL,6*CELL)
+
+	-- Add Pikachu
+	SpawnPikachu(mobs,17,14)
 
 	-- cycle the map and manage the special elements
 	for y=0,MAP_W/CELL do
@@ -382,6 +431,8 @@ function TIC()
 	p1.Update(t)
 	
 	------------- DISPLAY -------------
+	-- mobs
+	for i,mob in pairs(mobs) do mob.Display(t) end
 	-- player
 	p1.Display(t)
 
