@@ -72,14 +72,16 @@ end
 ------------------------------------------
 -- Message Box class
 local function MessageBox()
-	local MSG_TIMEOUT=60*4
+	local MSG_TIMEOUT=60*3
 	local box={
 		msg=nil,
 		timeout=MSG_TIMEOUT
 	}
 
 	function box.Push(msg)
-		box.msg=msg
+		if msg~=nil then
+			box.msg=msg
+		end
 	end
 
 	function box.Display()
@@ -297,6 +299,15 @@ local function Player(x,y)
 		s.curAnim=s.anims.idle
 
 		s.Controls()
+
+		-- check environment messages
+		for i,statics in pairs(statics) do
+			-- collision detected
+			if math.abs(s.x-statics.x)<CELL and math.abs(s.y-statics.y)<CELL then
+				-- get message
+				msgBox.Push(statics.PullMsg())
+			end
+		end
 	end
 	
 	function s.Controls()
@@ -348,7 +359,8 @@ local function StaticItem(x,y,anim,tag)
 		alpha=8,
 		curAnim=anim,  -- [] only one anim
 		visible=true,
-		flip=false
+		flip=false,
+		msg="Hi!"
 	}
 
 	function s.Update(time)
@@ -376,12 +388,18 @@ local function StaticItem(x,y,anim,tag)
 		end
 	end
 
+	function s.PullMsg()
+		return s.msg
+	end
+
 	return s
 end
 
 local function SpawnPikachu(stable,cellX,cellY)
 	local anim=Anim(20,{268})
-	table.insert(stable, StaticItem(cellX*CELL,cellY*CELL,anim,"Pikachu"))
+	local s=StaticItem(cellX*CELL,cellY*CELL,anim,"Pikachu")
+	s.msg="You found Pikachu!"
+	table.insert(stable, s)
 end
 
 -- init
@@ -393,6 +411,7 @@ local function Init()
 	firstRun=false
 	
 	-- clear tables
+	statics={}
 	mobs={}
 	-- animTiles={}
 	-- traps={}
@@ -402,7 +421,7 @@ local function Init()
 	p1=Player(8*CELL,6*CELL)
 
 	-- Add Pikachu
-	SpawnPikachu(mobs,17,14)
+	SpawnPikachu(statics,17,14)
 
 	-- cycle the map and manage the special elements
 	for y=0,MAP_W/CELL do
@@ -436,6 +455,8 @@ function TIC()
 	-- map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL,0,0,-1,2)
 		
 	------------- UPDATE -------------
+	-- statics
+	for i,statics in pairs(statics) do statics.Update(t) end
 	-- mobs
 	for i,mob in pairs(mobs) do mob.Update(t) end
 	
@@ -443,6 +464,8 @@ function TIC()
 	p1.Update(t)
 	
 	------------- DISPLAY -------------
+	-- statics
+	for i,statics in pairs(statics) do statics.Display(t) end
 	-- mobs
 	for i,mob in pairs(mobs) do mob.Display(t) end
 	-- player
