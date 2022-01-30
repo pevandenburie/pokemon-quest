@@ -78,9 +78,10 @@ local function MessageBox()
 		timeout=MSG_TIMEOUT
 	}
 
-	function box.Push(msg)
+	function box.Push(msg, timeout)
 		if msg~=nil then
 			box.msg=msg
+			box.timeout=timeout or MSG_TIMEOUT
 		end
 	end
 
@@ -98,7 +99,6 @@ local function MessageBox()
 				rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
 				local width=print(box.msg,0,-6)
 				print(box.msg,(BOX_W-width)//2,(BOX_Y+(BOX_H-6)//2),0)
-		
 			end
 		end
 	end
@@ -301,11 +301,11 @@ local function Player(x,y)
 		s.Controls()
 
 		-- check environment messages
-		for i,statics in pairs(statics) do
+		for i,static in pairs(statics) do
 			-- collision detected
-			if math.abs(s.x-statics.x)<CELL and math.abs(s.y-statics.y)<CELL then
+			if math.abs(s.x-static.x)<CELL and math.abs(s.y-static.y)<CELL then
 				-- get message
-				msgBox.Push(statics.PullMsg())
+				msgBox.Push(static.GetMsg(), 60)
 			end
 		end
 	end
@@ -388,18 +388,18 @@ local function StaticItem(x,y,anim,tag)
 		end
 	end
 
-	function s.PullMsg()
+	function s.GetMsg()
 		return s.msg
 	end
 
 	return s
 end
 
-local function SpawnPikachu(stable,cellX,cellY)
+local function SpawnPikachu(statics,cellX,cellY)
 	local anim=Anim(20,{268})
 	local s=StaticItem(cellX*CELL,cellY*CELL,anim,"Pikachu")
-	s.msg="You found Pikachu!"
-	table.insert(stable, s)
+	s.msg="Vous avez trouvé Pikachu!"
+	table.insert(statics, s)
 end
 
 -- init
