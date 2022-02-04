@@ -42,6 +42,7 @@ local t=0	-- global time, used in TIC() method
 local cam={x=0,y=0}
 local mobs={}
 local firstRun=true
+local combat=true
 
 -- debug utilities
 local function PrintDebug(object)
@@ -413,6 +414,25 @@ local function SpawnSign(statics,cellX,cellY)
 	SpawnStaticItem(cellX,cellY,null,"Sign","M. Choo")
 end
 
+local function StartCombat(pk1,pk2)
+	-- draw scene
+	local BOX_X=4*CELL
+	local BOX_Y=4*CELL
+	local BOX_W=CAM_W-2*BOX_X
+	local BOX_H=10*CELL
+	rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
+	rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
+
+	-- draw pokemons
+	x=BOX_X+4*CELL
+	y=BOX_Y+4*CELL
+	alpha=8
+	flip=false
+	spr(268,x,y,alpha,1,flip,0,2,2)
+	-- show PV
+	-- show available attacks
+end
+
 -- init
 local p1
 
@@ -468,7 +488,11 @@ function TIC()
 	-- cls(3)
 	map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL)
 	-- map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL,0,0,-1,2)
-		
+	
+	if combat then
+		StartCombat(null,null)
+	else
+
 	------------- UPDATE -------------
 	-- statics
 	for i,statics in pairs(statics) do statics.Update(t) end
@@ -491,6 +515,8 @@ function TIC()
 
 	-- increment global time
 	t=t+1
+
+	end
 end
 -- <TILES>
 -- 000:4444444444444444444444444445444444444444444445444444444444444444
