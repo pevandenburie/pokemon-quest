@@ -429,6 +429,12 @@ local function StartCombat(pk1,pk2)
 	alpha=8
 	flip=false
 	spr(268,x,y,alpha,1,flip,0,2,2)
+	
+	x=BOX_X+BOX_W-6*CELL
+	y=BOX_Y+4*CELL
+	alpha=8
+	flip=false
+	spr(270,x,y,alpha,1,flip,0,2,2)
 	-- show PV
 	-- show available attacks
 end
