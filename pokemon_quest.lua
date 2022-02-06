@@ -42,7 +42,7 @@ local t=0	-- global time, used in TIC() method
 local cam={x=0,y=0}
 local mobs={}
 local firstRun=true
-local combat=true
+local combat=false
 
 -- debug utilities
 local function PrintDebug(object)
@@ -307,6 +307,8 @@ local function Player(x,y)
 			if math.abs(s.x-static.x)<CELL and math.abs(s.y-static.y)<CELL then
 				-- get message
 				msgBox.Push(static.GetMsg(), 60)
+				-- call attached callback
+				static.cb(static.param)
 			end
 		end
 	end
@@ -352,7 +354,7 @@ end
 
 ------------------------------------------
 -- Static Item class
-local function StaticItem(x,y,anim,tag)
+local function StaticItem(x,y,anim,tag,cb,param)
 	local s={
 		tag=tag or "staticItem",
 		x=x or 0,
@@ -361,7 +363,9 @@ local function StaticItem(x,y,anim,tag)
 		curAnim=anim,  -- [] only one anim
 		visible=true,
 		flip=false,
-		msg="Hi!"
+		msg="Hi!",
+		cb=cb or function(p) trace("hello") end, -- default callback
+		param=param or "NA"
 	}
 
 	function s.Update(time)
@@ -396,25 +400,24 @@ local function StaticItem(x,y,anim,tag)
 	return s
 end
 
-local function SpawnStaticItem(cellX,cellY,anim,tag,msg)
-	local s=StaticItem(cellX*CELL,cellY*CELL,anim,tag)
+local function SpawnStaticItem(cellX,cellY,anim,tag,msg,cb,param)
+	local s=StaticItem(cellX*CELL,cellY*CELL,anim,tag,cb,param)
 	s.msg=msg
 	table.insert(statics, s)
 end
 
-local function SpawnPikachu(statics,cellX,cellY)
-	SpawnStaticItem(cellX,cellY,Anim(20,{268}),"Pikachu","Vous avez trouvé Pikachu!")
+local function Pokemon(name,spr,pv)
+	local pk={
+		name=name or "unkown",
+		spr=spr,
+		pv=pv or 0
+	}
+	return pk
 end
 
-local function SpawnSalameche(statics,cellX,cellY)
-	SpawnStaticItem(cellX,cellY,Anim(20,{270}),"Salameche","Vous avez trouvé Salameche!")
-end
-
-local function SpawnSign(statics,cellX,cellY)
-	SpawnStaticItem(cellX,cellY,null,"Sign","M. Choo")
-end
 
 local function StartCombat(pk1,pk2)
+	combat = true
 	-- draw scene
 	local BOX_X=4*CELL
 	local BOX_Y=4*CELL
@@ -437,6 +440,24 @@ local function StartCombat(pk1,pk2)
 	spr(270,x,y,alpha,1,flip,0,2,2)
 	-- show PV
 	-- show available attacks
+end
+
+local function StartCombatCb(p)
+	trace("start combat!")
+	StartCombat(p[0],p[1])
+end
+local function SpawnPikachu(statics,cellX,cellY)
+	local pk=Pokemon("Pikachu",268,30)
+	SpawnStaticItem(cellX,cellY,Anim(20,{268}),pk.name,"Vous avez trouvé Pikachu!",StartCombatCb,{pk,pk})
+end
+
+local function SpawnSalameche(statics,cellX,cellY)
+	local pk=Pokemon("Salameche",268,30)
+	SpawnStaticItem(cellX,cellY,Anim(20,{270}),pk.name,"Vous avez trouvé Salameche!",StartCombatCb,{pk,pk})
+end
+
+local function SpawnSign(statics,cellX,cellY)
+	SpawnStaticItem(cellX,cellY,null,"Sign","M. Choo")
 end
 
 -- init
