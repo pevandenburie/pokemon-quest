@@ -403,9 +403,8 @@ local function StaticItem(x,y,anim,tag,cb,param)
 	return s
 end
 
-local function SpawnStaticItem(cellX,cellY,anim,tag,msg,cb,param)
+local function SpawnStaticItem(cellX,cellY,anim,tag,cb,param)
 	local s=StaticItem(cellX*CELL,cellY*CELL,anim,tag,cb,param)
-	s.msg=msg
 	table.insert(statics, s)
 end
 
@@ -454,26 +453,21 @@ local function StartFight(pk1,pk2)
 	trace("OK!")
 end
 
-local function StartFightCb(pk)
+local function StartFight_Cb(pk)
 	figthPk=pk
 end
 
 local function SpawnPokemon(cellX,cellY,pk)
-	SpawnStaticItem(cellX,cellY,Anim(20,{pk.spr}),pk.name,"Vous avez trouvé un Pokemon!",StartFightCb,pk)
+	SpawnStaticItem(cellX,cellY,Anim(20,{pk.spr}),pk.name,StartFight_Cb,pk)
 end
 
-local function SpawnPikachu(statics,cellX,cellY)
-	local pk=POKEMONS.PIKACHU -- Pokemon("Pikachu",268,30)
-	SpawnStaticItem(cellX,cellY,Anim(20,{268}),pk.name,"Vous avez trouvé Pikachu!",StartFightCb,pk)
-end
 
-local function SpawnSalameche(statics,cellX,cellY)
-	local pk=POKEMONS.SALAMECHE -- Pokemon("Salameche",268,30)
-	SpawnStaticItem(cellX,cellY,Anim(20,{270}),pk.name,"Vous avez trouvé Salameche!",StartFightCb,pk)
+local function PushMsg_Cb(msg)
+	msgBox.Push(msg, 60)
 end
 
 local function SpawnSign(statics,cellX,cellY)
-	SpawnStaticItem(cellX,cellY,null,"Sign","M. Choo")
+	SpawnStaticItem(cellX,cellY,null,"Sign",PushMsg_Cb,"M. Choo")
 end
 
 
