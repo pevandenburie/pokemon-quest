@@ -42,7 +42,10 @@ local t=0	-- global time, used in TIC() method
 local cam={x=0,y=0}
 local mobs={}
 local firstRun=true
-local combat=false
+local figthPk=nil
+
+-- init
+local p1
 
 -- debug utilities
 local function PrintDebug(object)
@@ -415,9 +418,16 @@ local function Pokemon(name,spr,pv)
 	return pk
 end
 
+local POKEMONS={
+	PIKACHU=Pokemon("Pikachu",268,40),
+	SALAMECHE=Pokemon("Salameche",270,30)
+}
 
-local function StartCombat(pk1,pk2)
-	combat = true
+local function StartFight(pk1,pk2)
+	trace("StartFight")
+	PrintDebug(pk1)
+	trace(pk1)
+	PrintDebug(pk2)
 	-- draw scene
 	local BOX_X=4*CELL
 	local BOX_Y=4*CELL
@@ -431,37 +441,37 @@ local function StartCombat(pk1,pk2)
 	y=BOX_Y+4*CELL
 	alpha=8
 	flip=false
-	spr(268,x,y,alpha,1,flip,0,2,2)
+	spr(pk1.spr,x,y,alpha,1,flip,0,2,2)
 	
 	x=BOX_X+BOX_W-6*CELL
 	y=BOX_Y+4*CELL
 	alpha=8
 	flip=false
-	spr(270,x,y,alpha,1,flip,0,2,2)
+	spr(pk2.spr,x,y,alpha,1,flip,0,2,2)
 	-- show PV
 	-- show available attacks
+	trace("OK!")
 end
 
-local function StartCombatCb(p)
-	trace("start combat!")
-	StartCombat(p[0],p[1])
+local function StartFightCb(pk)
+	figthPk=pk
 end
 local function SpawnPikachu(statics,cellX,cellY)
-	local pk=Pokemon("Pikachu",268,30)
-	SpawnStaticItem(cellX,cellY,Anim(20,{268}),pk.name,"Vous avez trouvé Pikachu!",StartCombatCb,{pk,pk})
+	local pk=POKEMONS.PIKACHU -- Pokemon("Pikachu",268,30)
+	
+	PrintDebug(p1.pk)
+	SpawnStaticItem(cellX,cellY,Anim(20,{268}),pk.name,"Vous avez trouvé Pikachu!",StartFightCb,pk)
 end
 
 local function SpawnSalameche(statics,cellX,cellY)
-	local pk=Pokemon("Salameche",268,30)
-	SpawnStaticItem(cellX,cellY,Anim(20,{270}),pk.name,"Vous avez trouvé Salameche!",StartCombatCb,{pk,pk})
+	local pk=POKEMONS.SALAMECHE -- Pokemon("Salameche",268,30)
+	SpawnStaticItem(cellX,cellY,Anim(20,{270}),pk.name,"Vous avez trouvé Salameche!",StartFightCb,pk)
 end
 
 local function SpawnSign(statics,cellX,cellY)
 	SpawnStaticItem(cellX,cellY,null,"Sign","M. Choo")
 end
 
--- init
-local p1
 
 local function Init()
 	-- detect if run for the fisrt time
@@ -472,11 +482,10 @@ local function Init()
 	statics={}
 	mobs={}
 	-- animTiles={}
-	-- traps={}
-	-- bullets={}
 	
 	-- create player
 	p1=Player(8*CELL,6*CELL)
+	p1.pk=POKEMONS.PIKACHU
 
 	-- Add statics items
 	SpawnSign(statics,15,6)
@@ -516,8 +525,8 @@ function TIC()
 	map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL)
 	-- map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL,0,0,-1,2)
 	
-	if combat then
-		StartCombat(null,null)
+	if figthPk then
+		StartFight(p1.pk,figthPk)
 	else
 
 	------------- UPDATE -------------
