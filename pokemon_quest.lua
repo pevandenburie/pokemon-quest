@@ -423,6 +423,17 @@ local POKEMONS={
 	BULBIZARRE=Pokemon("Bulbizarre",300,30)
 }
 
+local function FightDrawPokemon(pk,x,y,BOX_W)
+	-- local BOX_W=32
+	-- local BOX_H=40
+	-- rectb(x,y,BOX_W,BOX_H,0)
+	local width=print(pk.name,0,-6)
+	print(pk.name,x+(BOX_W-width)//2,y,0)
+	alpha=8
+	flip=false
+	spr(pk.spr,x+BOX_W//2-1*CELL,y+8,alpha,1,flip,0,2,2)
+end
+
 local function StartFight(pk1,pk2)
 	trace("StartFight")
 	PrintDebug(pk1)
@@ -437,17 +448,17 @@ local function StartFight(pk1,pk2)
 	rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
 
 	-- draw pokemons
-	x=BOX_X+4*CELL
-	y=BOX_Y+4*CELL
-	alpha=8
-	flip=false
-	spr(pk1.spr,x,y,alpha,1,flip,0,2,2)
+	-- x=BOX_X+4*CELL
+	-- y=BOX_Y+4*CELL
+	x=BOX_X+1*CELL
+	y=BOX_Y+1*CELL
+	w=BOX_W//2-2*CELL
+	FightDrawPokemon(pk1,x,y,w)
 	
-	x=BOX_X+BOX_W-6*CELL
-	y=BOX_Y+4*CELL
-	alpha=8
-	flip=false
-	spr(pk2.spr,x,y,alpha,1,flip,0,2,2)
+	-- x=BOX_X+BOX_W-6*CELL
+	x=BOX_X+BOX_W-w-1*CELL
+	-- y=BOX_Y+1*CELL
+	FightDrawPokemon(pk2,x,y,w)
 	-- show PV
 	-- show available attacks
 	trace("OK!")
