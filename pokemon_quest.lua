@@ -408,19 +408,37 @@ local function SpawnStaticItem(cellX,cellY,anim,tag,cb,param)
 	table.insert(statics, s)
 end
 
-local function Pokemon(name,spr,pv)
+local function Attack(name,damage)
+	local a={
+		name=name or "unkown",
+		damage=damage or 0
+	}
+	return a
+end
+
+local function Pokemon(name,spr,pv,a)
 	local pk={
 		name=name or "unkown",
 		spr=spr,
-		pv=pv or 0
+		pv=pv or 0,
+		attacks=attacks or []
 	}
 	return pk
 end
 
 local POKEMONS={
-	PIKACHU=Pokemon("Pikachu",268,40),
-	SALAMECHE=Pokemon("Salameche",270,30),
-	BULBIZARRE=Pokemon("Bulbizarre",300,30)
+	PIKACHU=Pokemon("Pikachu",268,60,[
+		Attack("Vive-Attaque",20),
+		Attack("Boul Elek",30)
+	]),
+	SALAMECHE=Pokemon("Salameche",270,70,[
+		Attack("Griffe",10),
+		Attack("Flammeche",30)
+	]),
+	BULBIZARRE=Pokemon("Bulbizarre",300,60,[
+		Attack("Charge",10),
+		Attack("Fouet Lianes",20)
+	])
 }
 
 local function PrintCentered(s,x,y,BOX_W,c)
