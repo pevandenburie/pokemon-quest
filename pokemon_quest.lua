@@ -416,29 +416,29 @@ local function Attack(name,damage)
 	return a
 end
 
-local function Pokemon(name,spr,pv,a)
+local function Pokemon(name,spr,pv,attacks)
 	local pk={
 		name=name or "unkown",
 		spr=spr,
 		pv=pv or 0,
-		attacks=attacks or []
+		attacks=attacks or {}
 	}
 	return pk
 end
 
 local POKEMONS={
-	PIKACHU=Pokemon("Pikachu",268,60,[
+	PIKACHU=Pokemon("Pikachu",268,60,{
 		Attack("Vive-Attaque",20),
 		Attack("Boul Elek",30)
-	]),
-	SALAMECHE=Pokemon("Salameche",270,70,[
+	}),
+	SALAMECHE=Pokemon("Salameche",270,70,{
 		Attack("Griffe",10),
 		Attack("Flammeche",30)
-	]),
-	BULBIZARRE=Pokemon("Bulbizarre",300,60,[
+	}),
+	BULBIZARRE=Pokemon("Bulbizarre",300,60,{
 		Attack("Charge",10),
 		Attack("Fouet Lianes",20)
-	])
+	})
 }
 
 local function PrintCentered(s,x,y,BOX_W,c)
@@ -455,7 +455,6 @@ local function DrawFightPokemon(pk,x,y,BOX_W)
 	flip=false
 	spr(pk.spr,x+BOX_W//2-1*CELL+1,y+8,alpha,1,flip,0,2,2)
 	-- show PV
-	-- local pv="PV " .. pk.pv
 	PrintCentered("PV " .. pk.pv,x,y+3*CELL+1,BOX_W,0)
 	-- show available attacks
 end
@@ -473,17 +472,13 @@ local function StartFight(pk1,pk2)
 	rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
 	rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
 
-	-- draw pokemons
-	-- x=BOX_X+4*CELL
-	-- y=BOX_Y+4*CELL
+	-- draw fighting pokemons
 	x=BOX_X+1*CELL
 	y=BOX_Y+1*CELL
 	w=BOX_W//2-2*CELL
 	DrawFightPokemon(pk1,x,y,w)
 	
-	-- x=BOX_X+BOX_W-6*CELL
 	x=BOX_X+BOX_W-w-1*CELL
-	-- y=BOX_Y+1*CELL
 	DrawFightPokemon(pk2,x,y,w)
 end
 
