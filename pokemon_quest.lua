@@ -457,6 +457,9 @@ local function DrawFightPokemon(pk,x,y,BOX_W)
 	-- show PV
 	PrintCentered("PV " .. pk.pv,x,y+3*CELL+1,BOX_W,0)
 	-- show available attacks
+	for i,a in pairs(pk.attacks) do 
+		print(a.name,x,y+(4+i)*CELL+1,0)
+	end
 end
 
 local function StartFight(pk1,pk2)
