@@ -446,6 +446,25 @@ local function PrintCentered(s,x,y,BOX_W,c)
 	print(s,x+(BOX_W-width)//2,y,c)
 end
 
+local function SelectableBox(s,x,y,w,c)
+	local b={
+		s=s or "",
+		x=x,
+		y=y,
+		w=w,
+		c=c,
+		selected=false
+	}
+
+	function b.Display()
+		print(b.s,b.x,b.y+1,b.c)
+		-- print(a.name,x,y+(4+i)*CELL+1,0)
+		if b.selected then rectb(b.x,b.y,b.w,CELL,b.c) end
+	end
+
+	return b
+end
+
 local function DrawFightPokemon(pk,x,y,BOX_W)
 	-- local BOX_W=32
 	-- local BOX_H=60
@@ -457,8 +476,11 @@ local function DrawFightPokemon(pk,x,y,BOX_W)
 	-- show PV
 	PrintCentered("PV " .. pk.pv,x,y+3*CELL+1,BOX_W,0)
 	-- show available attacks
-	for i,a in pairs(pk.attacks) do 
-		print(a.name,x,y+(4+i)*CELL+1,0)
+	for i,a in pairs(pk.attacks) do
+		-- print(a.name,x,y+(4+i)*CELL+1,0)
+		local b=SelectableBox(a.name,x,y+(4+i)*CELL,BOX_W,0)
+		b.selected=true
+		b.Display()
 	end
 end
 
