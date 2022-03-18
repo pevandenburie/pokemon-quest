@@ -456,7 +456,7 @@ local function SelectableBox(s,x,y,w,c)
 		selected=false
 	}
 
-	function b.Display()
+	function b.Draw()
 		print(b.s,b.x,b.y+1,b.c)
 		-- print(a.name,x,y+(4+i)*CELL+1,0)
 		if b.selected then rectb(b.x,b.y,b.w,CELL,b.c) end
@@ -476,19 +476,34 @@ local function DrawFightPokemon(pk,x,y,BOX_W)
 	-- show PV
 	PrintCentered("PV " .. pk.pv,x,y+3*CELL+1,BOX_W,0)
 	-- show available attacks
+	local selectables={}
 	for i,a in pairs(pk.attacks) do
 		-- print(a.name,x,y+(4+i)*CELL+1,0)
 		local b=SelectableBox(a.name,x,y+(4+i)*CELL,BOX_W,0)
-		b.selected=true
-		b.Display()
+		b.Draw()
+		table.insert(selectables,b)
 	end
+	return selectables
 end
 
-local function StartFight(pk1,pk2)
-	trace("StartFight")
-	PrintDebug(pk1)
-	trace(pk1)
-	PrintDebug(pk2)
+local function DrawPlayerPokemon(pk,x,y,BOX_W)
+	local selectables=DrawFightPokemon(pk,x,y,BOX_W)
+	
+	local b=SelectableBox("Retraite",x,y+(4+3)*CELL,BOX_W,0)
+	b.Draw()
+	table.insert(selectables,b)
+
+	return selectables
+end
+
+local initFight=false
+local fightSelectables={}
+local selected=1
+
+local function Fight(pk1,pk2)
+	trace("Fight")
+	-- PrintDebug(pk1)
+	-- PrintDebug(pk2)
 	-- draw scene
 	local BOX_X=4*CELL
 	local BOX_Y=4*CELL
@@ -501,11 +516,31 @@ local function StartFight(pk1,pk2)
 	x=BOX_X+1*CELL
 	y=BOX_Y+1*CELL
 	w=BOX_W//2-2*CELL
-	DrawFightPokemon(pk1,x,y,w)
+	fightSelectables=DrawPlayerPokemon(pk1,x,y,w)
+	fightSelectables[selected].selected=true
+	fightSelectables[selected].Draw()
 	
 	x=BOX_X+BOX_W-w-1*CELL
 	DrawFightPokemon(pk2,x,y,w)
+
+	if btn(c.UP) then
+		if selected>1 then 
+			selected=selected-1
+		end
+	end
+	if btn(c.DOWN) then
+		if selected<#fightSelectables then 
+			selected=selected+1
+		end
+	end
+	if btn(c.z) then
+	end
 end
+
+-- local function Fight(pk1,pk2)
+-- 	if not initFight then InitFight(pk1,pk2) end
+-- 	initFight=true
+-- end
 
 local function StartFight_Cb(pk)
 	figthPk=pk
@@ -579,7 +614,7 @@ function TIC()
 	-- map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL,0,0,-1,2)
 	
 	if figthPk then
-		StartFight(p1.pk,figthPk)
+		Fight(p1.pk,figthPk)
 	else
 
 	------------- UPDATE -------------
