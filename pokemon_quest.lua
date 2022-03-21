@@ -367,7 +367,7 @@ local function StaticItem(x,y,anim,tag,cb,param)
 		visible=true,
 		flip=false,
 		msg="Hi!",
-		cb=cb or function(p) trace("hello") end, -- default callback
+		cb=cb or function(p) trace("StaticItem") end, -- default callback
 		param=param or "NA"
 	}
 
@@ -446,14 +446,15 @@ local function PrintCentered(s,x,y,BOX_W,c)
 	print(s,x+(BOX_W-width)//2,y,c)
 end
 
-local function SelectableBox(s,x,y,w,c)
+local function SelectableBox(s,x,y,w,c,cb)
 	local b={
 		s=s or "",
 		x=x,
 		y=y,
 		w=w,
 		c=c,
-		selected=false
+		selected=false,
+		cb=cb or function(p) trace("No Action") end, -- default callback
 	}
 
 	function b.Draw()
@@ -462,7 +463,15 @@ local function SelectableBox(s,x,y,w,c)
 		if b.selected then rectb(b.x,b.y,b.w,CELL,b.c) end
 	end
 
+	function b.Call()
+		if b.cb then b.cb(b) end
+	end
+
 	return b
+end
+
+local function FightExit_cb(selectable)
+	figthPk=nil
 end
 
 local function DrawFightPokemon(pk,x,y,BOX_W)
@@ -489,7 +498,7 @@ end
 local function DrawPlayerPokemon(pk,x,y,BOX_W)
 	local selectables=DrawFightPokemon(pk,x,y,BOX_W)
 	
-	local b=SelectableBox("Retraite",x,y+(4+3)*CELL,BOX_W,0)
+	local b=SelectableBox("Retraite",x,y+(4+3)*CELL,BOX_W,0,FightExit_cb)
 	b.Draw()
 	table.insert(selectables,b)
 
@@ -541,6 +550,7 @@ local function Fight(pk1,pk2)
 			end
 			state=fightStates.SELECT
 		elseif btnp(c.z) then
+			fightSelectables[selected].Call()
 		end
 	elseif state==fightStates.SELECT then
 		-- if not btn(c.UP) and not btn
