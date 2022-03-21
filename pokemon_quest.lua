@@ -499,9 +499,15 @@ end
 local initFight=false
 local fightSelectables={}
 local selected=1
+local fightStates={
+	FIGHT=1,
+	SELECT=2,
+	DEFEND=3
+}
+local state=fightStates.FIGHT
 
 local function Fight(pk1,pk2)
-	trace("Fight")
+	-- trace("Fight")
 	-- PrintDebug(pk1)
 	-- PrintDebug(pk2)
 	-- draw scene
@@ -523,17 +529,24 @@ local function Fight(pk1,pk2)
 	x=BOX_X+BOX_W-w-1*CELL
 	DrawFightPokemon(pk2,x,y,w)
 
-	if btn(c.UP) then
-		if selected>1 then 
-			selected=selected-1
+	if state==fightStates.FIGHT then
+		if btnp(c.UP) then
+			if selected>1 then 
+				selected=selected-1
+			end
+			state=fightStates.SELECT
+		elseif btnp(c.DOWN) then
+			if selected<#fightSelectables then 
+				selected=selected+1
+			end
+			state=fightStates.SELECT
+		elseif btnp(c.z) then
 		end
-	end
-	if btn(c.DOWN) then
-		if selected<#fightSelectables then 
-			selected=selected+1
-		end
-	end
-	if btn(c.z) then
+	elseif state==fightStates.SELECT then
+		-- if not btn(c.UP) and not btn
+		state=fightStates.FIGHT
+	elseif state==fightStates.DEFEND then
+		trace ('DEFEND')
 	end
 end
 
