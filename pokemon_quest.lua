@@ -459,7 +459,6 @@ local function SelectableBox(s,x,y,w,c,cb)
 
 	function b.Draw()
 		print(b.s,b.x,b.y+1,b.c)
-		-- print(a.name,x,y+(4+i)*CELL+1,0)
 		if b.selected then rectb(b.x,b.y,b.w,CELL,b.c) end
 	end
 
@@ -471,49 +470,61 @@ local function SelectableBox(s,x,y,w,c,cb)
 end
 
 local function FightExit_cb(selectable)
+	trace("Retraite")
 	figthPk=nil
 end
 
-local function DrawFightPokemon(pk,x,y,BOX_W)
-	-- local BOX_W=32
-	-- local BOX_H=60
-	-- rectb(x,y,BOX_W,BOX_H,0)
-	PrintCentered(pk.name,x,y,BOX_W,0)
-	alpha=8
-	flip=false
-	spr(pk.spr,x+BOX_W//2-1*CELL+1,y+8,alpha,1,flip,0,2,2)
-	-- show PV
-	PrintCentered("PV " .. pk.pv,x,y+3*CELL+1,BOX_W,0)
-	-- show available attacks
-	local selectables={}
+local function FightPokemonBox(pk,x,y,w)
+	local b={
+		pk=pk,
+		x=x,
+		y=y,
+		w=w,
+		selectables={}
+	}
+
 	for i,a in pairs(pk.attacks) do
 		-- print(a.name,x,y+(4+i)*CELL+1,0)
-		local b=SelectableBox(a.name,x,y+(4+i)*CELL,BOX_W,0)
-		b.Draw()
-		table.insert(selectables,b)
+		local sb=SelectableBox(a.name,x,y+(4+i)*CELL,w,0)
+		table.insert(b.selectables,sb)
 	end
-	return selectables
+
+	function b.Draw()
+		-- rectb(x,y,BOX_W,BOX_H,0)
+		PrintCentered(b.pk.name,b.x,b.y,b.w,0)
+		alpha=8
+		flip=false
+		spr(b.pk.spr,b.x+b.w//2-1*CELL+1,b.y+8,alpha,1,flip,0,2,2)
+		-- show PV
+		PrintCentered("PV " .. b.pk.pv,b.x,b.y+3*CELL+1,b.w,0)
+
+		for i,sb in pairs(b.selectables) do
+			sb.Draw()
+		end
+	end
+
+	return b
 end
 
-local function DrawPlayerPokemon(pk,x,y,BOX_W)
-	local selectables=DrawFightPokemon(pk,x,y,BOX_W)
-	
-	local b=SelectableBox("Retraite",x,y+(4+3)*CELL,BOX_W,0,FightExit_cb)
-	b.Draw()
-	table.insert(selectables,b)
-
-	return selectables
+local function FightPlayerPokemonBox(pk,x,y,w)
+	local b=FightPokemonBox(pk,x,y,w)
+	table.insert(b.selectables,SelectableBox("Retraite",x,y+(4+3)*CELL,w,0,FightExit_cb))
+	return b
 end
+
 
 local initFight=false
+local pk1box
+local pk2box
 local fightSelectables={}
 local selected=1
 local fightStates={
+	INIT=0,
 	FIGHT=1,
 	SELECT=2,
 	DEFEND=3
 }
-local state=fightStates.FIGHT
+local state=fightStates.INIT
 
 local function Fight(pk1,pk2)
 	-- trace("Fight")
@@ -526,28 +537,36 @@ local function Fight(pk1,pk2)
 	local BOX_H=10*CELL
 	rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
 	rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
-
-	-- draw fighting pokemons
-	x=BOX_X+1*CELL
-	y=BOX_Y+1*CELL
-	w=BOX_W//2-2*CELL
-	fightSelectables=DrawPlayerPokemon(pk1,x,y,w)
-	fightSelectables[selected].selected=true
-	fightSelectables[selected].Draw()
 	
-	x=BOX_X+BOX_W-w-1*CELL
-	DrawFightPokemon(pk2,x,y,w)
+	if state==fightStates.INIT then
+	
+		-- draw fighting pokemons
+		x=BOX_X+1*CELL
+		y=BOX_Y+1*CELL
+		w=BOX_W//2-2*CELL
+		pk1box=FightPlayerPokemonBox(pk1,x,y,w)
+		fightSelectables=pk1box.selectables
+		fightSelectables[selected].selected=true
+		
+		x=BOX_X+BOX_W-w-1*CELL
+		pk2box=FightPokemonBox(pk2,x,y,w)
 
-	if state==fightStates.FIGHT then
+		state=fightStates.FIGHT
+
+	elseif state==fightStates.FIGHT then
 		if btnp(c.UP) then
-			if selected>1 then 
+			if selected>1 then
+				fightSelectables[selected].selected=false
 				selected=selected-1
 			end
+			fightSelectables[selected].selected=true
 			state=fightStates.SELECT
 		elseif btnp(c.DOWN) then
-			if selected<#fightSelectables then 
+			if selected<#fightSelectables then
+				fightSelectables[selected].selected=false
 				selected=selected+1
 			end
+			fightSelectables[selected].selected=true
 			state=fightStates.SELECT
 		elseif btnp(c.z) then
 			fightSelectables[selected].Call()
@@ -558,6 +577,9 @@ local function Fight(pk1,pk2)
 	elseif state==fightStates.DEFEND then
 		trace ('DEFEND')
 	end
+
+	pk1box.Draw()
+	pk2box.Draw()
 end
 
 -- local function Fight(pk1,pk2)
