@@ -520,11 +520,16 @@ local fightSelectables={}
 local selected=1
 local fightStates={
 	INIT=0,
-	FIGHT=1,
-	SELECT=2,
+	SELECT=1,
+	FIGHT=2,
 	DEFEND=3
 }
-local state=fightStates.INIT
+-- local state=fightStates.INIT
+local curFight={
+	state=fightStates.INIT,
+	pk1=nil,
+	pk2=nil
+}
 
 local function Fight(pk1,pk2)
 	-- trace("Fight")
@@ -538,7 +543,7 @@ local function Fight(pk1,pk2)
 	rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
 	rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
 	
-	if state==fightStates.INIT then
+	if curFight.state==fightStates.INIT then
 	
 		-- draw fighting pokemons
 		x=BOX_X+1*CELL
@@ -551,30 +556,29 @@ local function Fight(pk1,pk2)
 		x=BOX_X+BOX_W-w-1*CELL
 		pk2box=FightPokemonBox(pk2,x,y,w)
 
-		state=fightStates.FIGHT
+		curFight.pk1=pk1
+		curFight.pk2=pk2
+		curFight.state=fightStates.SELECT
 
-	elseif state==fightStates.FIGHT then
+	elseif curFight.state==fightStates.SELECT then
 		if btnp(c.UP) then
 			if selected>1 then
 				fightSelectables[selected].selected=false
 				selected=selected-1
 			end
 			fightSelectables[selected].selected=true
-			state=fightStates.SELECT
 		elseif btnp(c.DOWN) then
 			if selected<#fightSelectables then
 				fightSelectables[selected].selected=false
 				selected=selected+1
 			end
 			fightSelectables[selected].selected=true
-			state=fightStates.SELECT
 		elseif btnp(c.z) then
 			fightSelectables[selected].Call()
 		end
-	elseif state==fightStates.SELECT then
-		-- if not btn(c.UP) and not btn
-		state=fightStates.FIGHT
-	elseif state==fightStates.DEFEND then
+	elseif curFight.state==fightStates.FIGHT then
+		-- state=fightStates.FIGHT
+	elseif curFight.state==fightStates.DEFEND then
 		trace ('DEFEND')
 	end
 
