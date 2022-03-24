@@ -408,6 +408,8 @@ local function SpawnStaticItem(cellX,cellY,anim,tag,cb,param)
 	table.insert(statics, s)
 end
 
+------------------------------------------
+-- Pokedex
 local function Attack(name,damage)
 	local a={
 		name=name or "unkown",
@@ -416,7 +418,7 @@ local function Attack(name,damage)
 	return a
 end
 
-local function Pokemon(name,spr,pv,attacks)
+local function PokedexEntry(name,spr,pv,attacks)
 	local pk={
 		name=name or "unkown",
 		spr=spr,
@@ -426,20 +428,35 @@ local function Pokemon(name,spr,pv,attacks)
 	return pk
 end
 
-local POKEMONS={
-	PIKACHU=Pokemon("Pikachu",268,60,{
+local POKEDEX={
+	PIKACHU=PokedexEntry("Pikachu",268,60,{
 		Attack("Vive-Attaque",20),
 		Attack("Boul Elek",30)
 	}),
-	SALAMECHE=Pokemon("Salameche",270,70,{
+	SALAMECHE=PokedexEntry("Salameche",270,70,{
 		Attack("Griffe",10),
 		Attack("Flammeche",30)
 	}),
-	BULBIZARRE=Pokemon("Bulbizarre",300,60,{
+	BULBIZARRE=PokedexEntry("Bulbizarre",300,60,{
 		Attack("Charge",10),
 		Attack("Fouet Lianes",20)
 	})
 }
+
+------------------------------------------
+-- Living Pokemon entity created from Pokedex entry
+local function Pokemon(pkdex)
+	local p={
+		pkdex=pkdex,
+		name=pkdex.name,
+		spr=pkdex.spr,
+		pv=pkdex.pv,
+		attacks=pkdex.attacks,
+		curPv=pkdex.pv,
+		--experience
+	}
+	return p
+end
 
 local function PrintCentered(s,x,y,BOX_W,c)
 	local width=print(s,0,-6)
@@ -496,7 +513,7 @@ local function FightPokemonBox(pk,x,y,w)
 		flip=false
 		spr(b.pk.spr,b.x+b.w//2-1*CELL+1,b.y+8,alpha,1,flip,0,2,2)
 		-- show PV
-		PrintCentered("PV " .. b.pk.pv,b.x,b.y+3*CELL+1,b.w,0)
+		PrintCentered("PV " .. b.pk.curPv .. "/" .. b.pk.pv,b.x,b.y+3*CELL+1,b.w,0)
 
 		for i,sb in pairs(b.selectables) do
 			sb.Draw()
@@ -513,7 +530,6 @@ local function FightPlayerPokemonBox(pk,x,y,w)
 end
 
 
-local initFight=false
 local pk1box
 local pk2box
 local fightSelectables={}
@@ -586,11 +602,6 @@ local function Fight(pk1,pk2)
 	pk2box.Draw()
 end
 
--- local function Fight(pk1,pk2)
--- 	if not initFight then InitFight(pk1,pk2) end
--- 	initFight=true
--- end
-
 local function StartFight_Cb(pk)
 	figthPk=pk
 end
@@ -621,15 +632,15 @@ local function Init()
 	
 	-- create player
 	p1=Player(8*CELL,6*CELL)
-	p1.pk=POKEMONS.PIKACHU
+	p1.pk=Pokemon(POKEDEX.PIKACHU)
 
 	-- Add statics items
 	SpawnSign(statics,15,6)
 
 	-- Add Pokemons
-	SpawnPokemon(17,14,POKEMONS.PIKACHU)
-	SpawnPokemon(20,2,POKEMONS.BULBIZARRE)
-	SpawnPokemon(2,14,POKEMONS.SALAMECHE)
+	SpawnPokemon(17,14,Pokemon(POKEDEX.PIKACHU))
+	SpawnPokemon(20,2,Pokemon(POKEDEX.BULBIZARRE))
+	SpawnPokemon(2,14,Pokemon(POKEDEX.SALAMECHE))
 
 	-- cycle the map and manage the special elements
 	for y=0,MAP_W/CELL do
