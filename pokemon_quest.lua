@@ -458,12 +458,31 @@ local function Pokemon(pkdex)
 	return p
 end
 
+------------------------------------------
+-- Fighting context and tools
+local pk1box
+local pk2box
+local fightSelectables={}
+local selected=1
+local fightStates={
+	INIT=0,
+	SELECT=1,
+	FIGHT=2,
+	DEFEND=3
+}
+
+local curFight={
+	state=fightStates.INIT,
+	pk1=nil,
+	pk2=nil
+}
+
 local function PrintCentered(s,x,y,BOX_W,c)
 	local width=print(s,0,-6)
 	print(s,x+(BOX_W-width)//2,y,c)
 end
 
-local function SelectableBox(s,x,y,w,c,cb)
+local function SelectableBox(s,x,y,w,c,cb,ctx)
 	local b={
 		s=s or "",
 		x=x,
@@ -472,6 +491,7 @@ local function SelectableBox(s,x,y,w,c,cb)
 		c=c,
 		selected=false,
 		cb=cb or function(p) trace("No Action") end, -- default callback
+		ctx=ctx
 	}
 
 	function b.Draw()
@@ -480,10 +500,14 @@ local function SelectableBox(s,x,y,w,c,cb)
 	end
 
 	function b.Call()
-		if b.cb then b.cb(b) end
+		if b.cb then b.cb(ctx) end
 	end
 
 	return b
+end
+
+local function Attack_cb(attack)
+	trace("Attack " .. attack.name .. " from " .. curFight.pk1.name .. " on " .. curFight.pk2.name)
 end
 
 local function FightExit_cb(selectable)
@@ -500,9 +524,9 @@ local function FightPokemonBox(pk,x,y,w)
 		selectables={}
 	}
 
-	for i,a in pairs(pk.attacks) do
+	for i,attack in pairs(pk.attacks) do
 		-- print(a.name,x,y+(4+i)*CELL+1,0)
-		local sb=SelectableBox(a.name,x,y+(4+i)*CELL,w,0)
+		local sb=SelectableBox(attack.name,x,y+(4+i)*CELL,w,0,Attack_cb,attack)
 		table.insert(b.selectables,sb)
 	end
 
@@ -529,23 +553,6 @@ local function FightPlayerPokemonBox(pk,x,y,w)
 	return b
 end
 
-
-local pk1box
-local pk2box
-local fightSelectables={}
-local selected=1
-local fightStates={
-	INIT=0,
-	SELECT=1,
-	FIGHT=2,
-	DEFEND=3
-}
--- local state=fightStates.INIT
-local curFight={
-	state=fightStates.INIT,
-	pk1=nil,
-	pk2=nil
-}
 
 local function Fight(pk1,pk2)
 	-- trace("Fight")
