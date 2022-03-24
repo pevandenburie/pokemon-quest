@@ -467,7 +467,7 @@ local selected=1
 local fightStates={
 	INIT=0,
 	SELECT=1,
-	FIGHT=2,
+	ATTACK=2,
 	DEFEND=3
 }
 
@@ -507,7 +507,16 @@ local function SelectableBox(s,x,y,w,c,cb,ctx)
 end
 
 local function Attack_cb(attack)
-	trace("Attack " .. attack.name .. " from " .. curFight.pk1.name .. " on " .. curFight.pk2.name)
+	local pk_a
+	local pb_d
+	if curFight.state==fightStates.ATTACK then
+		pk_a=curFight.pk1
+		pk_d=curFight.pk2
+	elseif curFight.state==fightStates.DEFEND then
+		pk_a=curFight.pk2
+		pk_d=curFight.pk1
+	end
+	trace("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name)
 end
 
 local function FightExit_cb(selectable)
@@ -597,9 +606,10 @@ local function Fight(pk1,pk2)
 			end
 			fightSelectables[selected].selected=true
 		elseif btnp(c.z) then
+			curFight.state=fightStates.ATTACK
 			fightSelectables[selected].Call()
 		end
-	elseif curFight.state==fightStates.FIGHT then
+	elseif curFight.state==fightStates.ATTACK then
 		-- state=fightStates.FIGHT
 	elseif curFight.state==fightStates.DEFEND then
 		trace ('DEFEND')
