@@ -83,6 +83,8 @@ local function MessageBox()
 	}
 
 	function box.Push(msg, timeout)
+		trace("to display:")
+		trace(msg)
 		if msg~=nil then
 			box.msg=msg
 			box.timeout=timeout or MSG_TIMEOUT
@@ -115,7 +117,7 @@ local function MessageBox()
 	return box
 end
 
--- GLobal message box
+-- Global message box
 local msgBox = MessageBox()
 
 ------------------------------------------
@@ -470,10 +472,12 @@ end
 
 ------------------------------------------
 -- Fighting context and tools
+local bgBox
 local pk1box
 local pk2box
 local fightSelectables={}
 local selected=1
+local fightMsgBox=MessageBox()
 local fightStates={
 	INIT=0,
 	SELECT=1,
@@ -527,6 +531,8 @@ local function Attack_cb(attack)
 		pk_d=curFight.pk1
 	end
 	-- trace("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name)
+	fightMsgBox.Push("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name, 60*2)
+	fightMsgBox.Display()
 	pk_d.ReceiveAttack(attack,pk_a)
 end
 
@@ -573,6 +579,22 @@ local function FightPlayerPokemonBox(pk,x,y,w)
 	return b
 end
 
+local function FightBackgroundBox(x,y,w,h)
+	b={
+		x=x,
+		y=y,
+		w=w,
+		h=h
+	}
+
+	function b.Draw()
+		rect(b.x,b.y,b.w,b.h,15)
+		rectb(b.x+2,b.y+2,b.w-4,b.h-4,0)
+	end
+
+	return b
+end
+
 
 local function Fight(pk1,pk2)
 	-- trace("Fight")
@@ -583,11 +605,12 @@ local function Fight(pk1,pk2)
 	local BOX_Y=4*CELL
 	local BOX_W=CAM_W-2*BOX_X
 	local BOX_H=10*CELL
-	rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
-	rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
+	-- rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
+	-- rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
 	
 	if curFight.state==fightStates.INIT then
-	
+		-- Background
+		bgBox=FightBackgroundBox(BOX_X,BOX_Y,BOX_W,BOX_H)
 		-- draw fighting pokemons
 		x=BOX_X+1*CELL
 		y=BOX_Y+1*CELL
@@ -602,6 +625,10 @@ local function Fight(pk1,pk2)
 		curFight.pk1=pk1
 		curFight.pk2=pk2
 		curFight.state=fightStates.SELECT
+		
+		bgBox.Draw()
+		pk1box.Draw()
+		pk2box.Draw()
 
 	elseif curFight.state==fightStates.SELECT then
 		if btnp(c.UP) then
@@ -610,24 +637,33 @@ local function Fight(pk1,pk2)
 				selected=selected-1
 			end
 			fightSelectables[selected].selected=true
+			
+			bgBox.Draw()
+			pk1box.Draw()
+			pk2box.Draw()
+
 		elseif btnp(c.DOWN) then
 			if selected<#fightSelectables then
 				fightSelectables[selected].selected=false
 				selected=selected+1
 			end
 			fightSelectables[selected].selected=true
+		
+			bgBox.Draw()
+			pk1box.Draw()
+			pk2box.Draw()
+			
 		elseif btnp(c.z) then
 			curFight.state=fightStates.ATTACK
 			fightSelectables[selected].Call()
 		end
+
 	elseif curFight.state==fightStates.ATTACK then
 		-- state=fightStates.FIGHT
 	elseif curFight.state==fightStates.DEFEND then
 		trace ('DEFEND')
 	end
 
-	pk1box.Draw()
-	pk2box.Draw()
 end
 
 local function StartFight_Cb(pk)
@@ -690,6 +726,11 @@ end
 function TIC()
 	-- runs only the first time or to reset the game
 	Init()
+	
+	if figthPk then
+		Fight(p1.pk,figthPk)
+	else
+
 	-- reset the game if the player is died and is pressed x
 	-- if btn(5) and p1.died then firstRun=true end
 	-- if btn(5) and boss.died then firstRun=true end
@@ -700,10 +741,6 @@ function TIC()
 	-- cls(3)
 	map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL)
 	-- map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL,0,0,-1,2)
-	
-	if figthPk then
-		Fight(p1.pk,figthPk)
-	else
 
 	------------- UPDATE -------------
 	-- statics
