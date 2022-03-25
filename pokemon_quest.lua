@@ -455,6 +455,16 @@ local function Pokemon(pkdex)
 		curPv=pkdex.pv,
 		--experience
 	}
+
+	function p.ReceiveAttack(attack,fromPk)
+		trace("Attack " .. attack.name .. " from " .. fromPk.name .. " on " .. p.name)
+		p.curPv=p.curPv-attack.damage
+		if p.curPv<=0 then
+			p.curPv=0
+			trace(p.name .. " is KO!!!")
+		end
+	end
+
 	return p
 end
 
@@ -516,7 +526,8 @@ local function Attack_cb(attack)
 		pk_a=curFight.pk2
 		pk_d=curFight.pk1
 	end
-	trace("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name)
+	-- trace("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name)
+	pk_d.ReceiveAttack(attack,pk_a)
 end
 
 local function FightExit_cb(selectable)
