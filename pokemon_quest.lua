@@ -310,8 +310,6 @@ local function Player(x,y)
 		for i,static in pairs(statics) do
 			-- collision detected
 			if math.abs(s.x-static.x)<CELL and math.abs(s.y-static.y)<CELL then
-				-- get message
-				msgBox.Push(static.GetMsg(), 60)
 				-- call attached callback
 				static.cb(static.param)
 			end
@@ -396,10 +394,6 @@ local function StaticItem(x,y,anim,tag,cb,param)
 			spr(s.curAnim.frame,x,y,s.alpha,1,s.flip,0,2,2)
 			-- rectb(x,y,CELL,CELL,14)
 		end
-	end
-
-	function s.GetMsg()
-		return s.msg
 	end
 
 	return s
@@ -531,8 +525,8 @@ local function Attack_cb(attack)
 		pk_d=curFight.pk1
 	end
 	-- trace("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name)
-	fightMsgBox.Push("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name, 60*2)
-	fightMsgBox.Display()
+	fightMsgBox.Push("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name, 60)
+	-- fightMsgBox.Display()
 	pk_d.ReceiveAttack(attack,pk_a)
 end
 
@@ -637,10 +631,6 @@ local function Fight(pk1,pk2)
 				selected=selected-1
 			end
 			fightSelectables[selected].selected=true
-			
-			bgBox.Draw()
-			pk1box.Draw()
-			pk2box.Draw()
 
 		elseif btnp(c.DOWN) then
 			if selected<#fightSelectables then
@@ -648,20 +638,32 @@ local function Fight(pk1,pk2)
 				selected=selected+1
 			end
 			fightSelectables[selected].selected=true
-		
-			bgBox.Draw()
-			pk1box.Draw()
-			pk2box.Draw()
-			
+
 		elseif btnp(c.z) then
 			curFight.state=fightStates.ATTACK
 			fightSelectables[selected].Call()
 		end
+		
+		bgBox.Draw()
+		pk1box.Draw()
+		pk2box.Draw()
+		fightMsgBox.Display()
 
 	elseif curFight.state==fightStates.ATTACK then
-		-- state=fightStates.FIGHT
+		if btnp(c.z) then
+			-- clear message if any
+			fightMsgBox.Clear()
+			-- Now is computer Pokemon turn to attack!
+			curFight.state=fightStates.DEFEND
+		end
+		
+		bgBox.Draw()
+		pk1box.Draw()
+		pk2box.Draw()
+		fightMsgBox.Display()
+
 	elseif curFight.state==fightStates.DEFEND then
-		trace ('DEFEND')
+		-- trace ('DEFEND')
 	end
 
 end
