@@ -175,7 +175,7 @@ local function Anim(span,frames,loop)
 				if s.indx==#s.frames then s.ended=true end
 			end
 			s.tick=time+s.span
-		end 
+		end
 	end
 	
 	function s.RandomIndx()
@@ -551,7 +551,6 @@ local function FightPokemonBox(pk,x,y,w)
 	end
 
 	function b.Draw()
-		-- rectb(x,y,BOX_W,BOX_H,0)
 		PrintCentered(b.pk.name,b.x,b.y,b.w,0)
 		alpha=8
 		flip=false
@@ -569,7 +568,7 @@ end
 
 local function FightPlayerPokemonBox(pk,x,y,w)
 	local b=FightPokemonBox(pk,x,y,w)
-	table.insert(b.selectables,SelectableBox("Retraite",x,y+(4+3)*CELL,w,0,FightExit_cb))
+	table.insert(b.selectables,SelectableBox("Retraite",x,y+(4+4)*CELL,w,0,FightExit_cb))
 	return b
 end
 
@@ -595,10 +594,10 @@ local function Fight(pk1,pk2)
 	-- PrintDebug(pk1)
 	-- PrintDebug(pk2)
 	-- draw scene
-	local BOX_X=4*CELL
-	local BOX_Y=4*CELL
+	local BOX_X=2*CELL
+	local BOX_Y=2*CELL
 	local BOX_W=CAM_W-2*BOX_X
-	local BOX_H=10*CELL
+	local BOX_H=CAM_H-2*BOX_Y
 	-- rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
 	-- rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
 	
