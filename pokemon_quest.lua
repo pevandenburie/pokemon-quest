@@ -75,11 +75,20 @@ end
 
 ------------------------------------------
 -- Message Box class
-local function MessageBox()
+local function MessageBox(x,y,w,h)
+	local BOX_X=0
+	local BOX_Y=12*CELL
+	local BOX_W=CAM_W-2*BOX_X
+	local BOX_H=CAM_H-BOX_Y
 	local MSG_TIMEOUT=60*3
+
 	local box={
+		x=x or BOX_X,
+		y=y or BOX_Y,
+		w=w or BOX_W,
+		h=h or BOX_H,
 		msg=nil,
-		timeout=MSG_TIMEOUT
+		timeout=MSG_TIMEOUT,
 	}
 
 	function box.Push(msg, timeout)
@@ -97,15 +106,17 @@ local function MessageBox()
 			if box.timeout<=0 then
 				box.Clear()
 			else
-				local BOX_X=0
-				local BOX_Y=12*CELL
-				local BOX_W=CAM_W-2*BOX_X
-				local BOX_H=CAM_H-BOX_Y
-				rect(BOX_X,BOX_Y,BOX_W,BOX_H,15)
-				rectb(BOX_X+2,BOX_Y+2,BOX_W-4,BOX_H-4,0)
-				local width=print(box.msg,0,-6)
-				print(box.msg,(BOX_W-width)//2,(BOX_Y+(BOX_H-6)//2),0)
+				box.Draw()
 			end
+		end
+	end
+	
+	function box.Draw()
+		rect(box.x,box.y,box.w,box.h,15)
+		rectb(box.x+2,box.y+2,box.w-4,box.h-4,0)
+		if box.msg then
+			local width=print(box.msg,0,-6)
+			print(box.msg,(box.w-width)//2,(box.y+(box.h-6)//2),0)
 		end
 	end
 
@@ -471,7 +482,7 @@ local pk1box
 local pk2box
 local fightSelectables={}
 local selected=1
-local fightMsgBox=MessageBox()
+local fightMsgBox
 local fightStates={
 	INIT=0,
 	SELECT=1,
@@ -525,7 +536,7 @@ local function Attack_cb(attack)
 		pk_d=curFight.pk1
 	end
 	-- trace("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name)
-	fightMsgBox.Push("Attack " .. attack.name .. " from " .. pk_a.name .. " on " .. pk_d.name, 60)
+	fightMsgBox.Push(pk_a.name .. " lance " .. attack.name .. " !", 60)
 	-- fightMsgBox.Display()
 	pk_d.ReceiveAttack(attack,pk_a)
 end
@@ -604,6 +615,7 @@ local function Fight(pk1,pk2)
 	if curFight.state==fightStates.INIT then
 		-- Background
 		bgBox=FightBackgroundBox(BOX_X,BOX_Y,BOX_W,BOX_H)
+		fightMsgBox=MessageBox(BOX_X,BOX_Y+BOX_H,BOX_W,2*CELL)
 		-- draw fighting pokemons
 		x=BOX_X+1*CELL
 		y=BOX_Y+1*CELL
@@ -618,10 +630,6 @@ local function Fight(pk1,pk2)
 		curFight.pk1=pk1
 		curFight.pk2=pk2
 		curFight.state=fightStates.SELECT
-		
-		bgBox.Draw()
-		pk1box.Draw()
-		pk2box.Draw()
 
 	elseif curFight.state==fightStates.SELECT then
 		if btnp(c.UP) then
@@ -642,11 +650,6 @@ local function Fight(pk1,pk2)
 			curFight.state=fightStates.ATTACK
 			fightSelectables[selected].Call()
 		end
-		
-		bgBox.Draw()
-		pk1box.Draw()
-		pk2box.Draw()
-		fightMsgBox.Display()
 
 	elseif curFight.state==fightStates.ATTACK then
 		if btnp(c.z) then
@@ -656,15 +659,14 @@ local function Fight(pk1,pk2)
 			curFight.state=fightStates.DEFEND
 		end
 		
-		bgBox.Draw()
-		pk1box.Draw()
-		pk2box.Draw()
-		fightMsgBox.Display()
-
 	elseif curFight.state==fightStates.DEFEND then
 		-- trace ('DEFEND')
 	end
 
+	bgBox.Draw()
+	pk1box.Draw()
+	pk2box.Draw()
+	fightMsgBox.Draw()
 end
 
 local function StartFight_Cb(pk)
