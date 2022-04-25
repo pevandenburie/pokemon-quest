@@ -487,7 +487,8 @@ local fightStates={
 	INIT=0,
 	SELECT=1,
 	ATTACK=2,
-	DEFEND=3
+	P2_SELECT=3,
+	P2_ATTACK=4
 }
 
 local curFight={
@@ -531,7 +532,7 @@ local function Attack_cb(attack)
 	if curFight.state==fightStates.ATTACK then
 		pk_a=curFight.pk1
 		pk_d=curFight.pk2
-	elseif curFight.state==fightStates.DEFEND then
+	elseif curFight.state==fightStates.P2_ATTACK then
 		pk_a=curFight.pk2
 		pk_d=curFight.pk1
 	end
@@ -655,12 +656,28 @@ local function Fight(pk1,pk2)
 		if btnp(c.z) then
 			-- clear message if any
 			fightMsgBox.Clear()
+			fightSelectables[selected].selected=false
 			-- Now is computer Pokemon turn to attack!
-			curFight.state=fightStates.DEFEND
+			curFight.state=fightStates.P2_SELECT
 		end
 		
-	elseif curFight.state==fightStates.DEFEND then
-		-- trace ('DEFEND')
+	elseif curFight.state==fightStates.P2_SELECT then
+		-- trace ('P2_SELECT')
+		pk2box.selectables[1].selected=true
+		curFight.state=fightStates.P2_ATTACK
+		pk2box.selectables[1].Call()
+		
+	elseif curFight.state==fightStates.P2_ATTACK then
+		-- trace ('P2_ATTACK')
+		if btnp(c.z) then
+			-- clear message if any
+			fightMsgBox.Clear()
+			pk2box.selectables[1].selected=false
+			-- Now is player Pokemon turn to attack!
+			selected=1
+			fightSelectables[selected].selected=true
+			curFight.state=fightStates.SELECT
+		end
 	end
 
 	bgBox.Draw()
