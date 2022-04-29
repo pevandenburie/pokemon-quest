@@ -722,7 +722,7 @@ local function SpawnSign(cellX,cellY,msg)
 end
 
 local function SpawnCharacter(cellX,cellY,msg)
-	SpawnActivableItem(cellX,cellY,null,"Sign",PushMsg_Cb,msg)
+	SpawnActivableItem(cellX,cellY,Anim(20,{320}),"Char",PushMsg_Cb,msg)
 end
 
 
@@ -745,7 +745,7 @@ local function Init()
 	SpawnSign(15,6,"Ze Matuto")
 
 	-- Add Characters
-	-- SpawCharacter(19,14,)
+	SpawnCharacter(19,14,"Ola!")
 
 	-- Add Pokemons
 	SpawnPokemon(17,14,Pokemon(POKEDEX.PIKACHU))
@@ -798,7 +798,9 @@ function TIC()
 
 	------------- UPDATE -------------
 	-- statics
-	for i,statics in pairs(statics) do statics.Update(t) end
+	for i,static in pairs(statics) do static.Update(t) end
+	-- activable statics
+	for i,activable in pairs(activables) do activable.Update(t) end
 	-- mobs
 	for i,mob in pairs(mobs) do mob.Update(t) end
 	
@@ -808,6 +810,8 @@ function TIC()
 	------------- DISPLAY -------------
 	-- statics
 	for i,statics in pairs(statics) do statics.Display(t) end
+	-- activable statics
+	for i,activable in pairs(activables) do activable.Display(t) end
 	-- mobs
 	for i,mob in pairs(mobs) do mob.Display(t) end
 	-- player
