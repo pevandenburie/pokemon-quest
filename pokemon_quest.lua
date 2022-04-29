@@ -23,7 +23,7 @@ local animated_tiles={
 }
 
 local SOLID_TILES_FROM=2
-local SOLID_TILES_TO=87
+local SOLID_TILES_TO=145
 
 --controls
 c={
@@ -138,8 +138,8 @@ local Collision={}
 function Collision:GetEdges(x,y,w,h)
 	local w=w or CELL-1
 	local h=h or CELL-1
-	local x=x+(CELL-w)/2
-	local y=y+(CELL-h)/2
+	-- local x=x+(CELL-w)/2
+	-- local y=y+(CELL-h)/2
 	
 	-- get the map ids in the edges	
 	local topLeft=mget(x/CELL,y/CELL)
@@ -236,7 +236,7 @@ local function Mob(x,y,player)
 		local ny=s.y+dy
 	
 		-- check the collision on the edges
-		local tl,tr,bl,br=Collision:GetEdges(nx,ny,CELL-2,CELL-2)
+		local tl,tr,bl,br=Collision:GetEdges(nx,ny,2*CELL-2,2*CELL-2)
 		
 		if not Collision:CheckSolid(tl) and not
 				 Collision:CheckSolid(tr) and not
@@ -314,17 +314,10 @@ local function Player(x,y)
 		
 		-- default: idle
 		s.curAnim=s.anims.idle
-
 		s.Controls()
-
-		-- check environment messages
-		for i,static in pairs(statics) do
-			-- collision detected
-			if math.abs(s.x-static.x)<CELL and math.abs(s.y-static.y)<CELL then
-				-- call attached callback
-				static.cb(static.param)
-			end
-		end
+		
+		-- check environment
+		s.CheckEnv()
 	end
 	
 	function s.Controls()
@@ -349,8 +342,28 @@ local function Player(x,y)
 			s.Move(1,0,s.anims.walkRight)
 		end
 		if btn(c.z) then
-			-- clear message if any
-			msgBox.Clear()
+			-- check environment activables
+			s.CheckActivable()
+		end
+	end
+
+	function s.CheckActivable()
+		for i,activable in pairs(activables) do
+			-- collision detected
+			if math.abs(s.x-activable.x)<2*CELL and math.abs(s.y-activable.y)<2*CELL then
+				-- call attached callback
+				activable.cb(activable.param)
+			end
+		end
+	end
+
+	function s.CheckEnv()
+		for i,static in pairs(statics) do
+			-- collision detected
+			if math.abs(s.x-static.x)<2*CELL and math.abs(s.y-static.y)<2*CELL then
+				-- call attached callback
+				static.cb(static.param)
+			end
 		end
 	end
 	
@@ -413,6 +426,11 @@ end
 local function SpawnStaticItem(cellX,cellY,anim,tag,cb,param)
 	local s=StaticItem(cellX*CELL,cellY*CELL,anim,tag,cb,param)
 	table.insert(statics, s)
+end
+
+local function SpawnActivableItem(cellX,cellY,anim,tag,cb,param)
+	local s=StaticItem(cellX*CELL,cellY*CELL,anim,tag,cb,param)
+	table.insert(activables, s)
 end
 
 ------------------------------------------
@@ -700,7 +718,7 @@ local function PushMsg_Cb(msg)
 end
 
 local function SpawnSign(statics,cellX,cellY)
-	SpawnStaticItem(cellX,cellY,null,"Sign",PushMsg_Cb,"M. Choo")
+	SpawnActivableItem(cellX,cellY,null,"Sign",PushMsg_Cb,"Zé Matuto")
 end
 
 
@@ -711,6 +729,7 @@ local function Init()
 	
 	-- clear tables
 	statics={}
+	activables={}
 	mobs={}
 	-- animTiles={}
 	
@@ -738,7 +757,7 @@ local function Init()
 		end
 	end
 
-	msgBox.Push("Bienvenue dans cette quete Pokemon!")
+	-- msgBox.Push("Bienvenue dans cette quete Pokemon!")
 end
 
 ------------------------------------------				
@@ -749,6 +768,14 @@ function TIC()
 	
 	if figthPk then
 		Fight(p1.pk,figthPk)
+	
+	elseif msgBox.msg then	
+		-- Show message if needed
+		msgBox.Display()
+
+		if btnp(c.z) then
+			msgBox.Clear()
+		end
 	else
 
 	-- reset the game if the player is died and is pressed x
@@ -780,7 +807,7 @@ function TIC()
 	p1.Display(t)
 
 	-- Show message if needed
-	msgBox.Display()
+	-- msgBox.Display()
 
 	-- increment global time
 	t=t+1
