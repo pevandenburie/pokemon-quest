@@ -43,6 +43,8 @@ local cam={x=0,y=0}
 local mobs={}
 local firstRun=true
 local figthPk=nil
+-- pokemon we just fled/lost to: no new fight with it until we leave its zone
+local justFledPk=nil
 
 -- init
 local p1
@@ -358,13 +360,21 @@ local function Player(x,y)
 	end
 
 	function s.CheckEnv()
+		local stillTouchingFled=false
 		for i,static in pairs(statics) do
 			-- collision detected
 			if math.abs(s.x-static.x)<2*CELL and math.abs(s.y-static.y)<2*CELL then
-				-- call attached callback
-				static.cb(static.param)
+				if static.param==justFledPk then
+					-- don't re-trigger the fight we just left until we walk away
+					stillTouchingFled=true
+				else
+					-- call attached callback
+					static.cb(static.param)
+				end
 			end
 		end
+		-- once out of its zone, allow fighting it again later
+		if not stillTouchingFled then justFledPk=nil end
 	end
 	
 	function s.Display(time)
@@ -578,6 +588,9 @@ end
 local function EndFight()
 	if curFight.victory and curFight.pk2 then
 		RemoveStaticPokemon(curFight.pk2)
+	else
+		-- fled or lost: block re-fighting it until we leave its contact zone
+		justFledPk=curFight.pk2
 	end
 	figthPk=nil
 	selected=1
