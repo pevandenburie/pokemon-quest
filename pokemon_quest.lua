@@ -45,6 +45,8 @@ local firstRun=true
 local figthPk=nil
 -- pokemon we just fled/lost to: no new fight with it until we leave its zone
 local justFledPk=nil
+-- npc we just talked to: no new dialogue with it until we leave its zone
+local justTalkedTo=nil
 
 -- init
 local p1
@@ -205,6 +207,30 @@ end
 
 
 ------------------------------------------
+-- Solid collision vs spawned items: blocks a single-axis step only if it
+-- pushes deeper into an item, so sliding and walking away still work.
+local function ItemBlocked(s,dx,dy,nx,ny)
+	local size=2*CELL-2
+	local function hitList(list)
+		if not list then return false end
+		for i,item in pairs(list) do
+			if dx~=0 and math.abs(s.y-item.y)<size
+				 and math.abs(nx-item.x)<size
+				 and math.abs(nx-item.x)<math.abs(s.x-item.x) then
+				return true
+			end
+			if dy~=0 and math.abs(s.x-item.x)<size
+				 and math.abs(ny-item.y)<size
+				 and math.abs(ny-item.y)<math.abs(s.y-item.y) then
+				return true
+			end
+		end
+		return false
+	end
+	return hitList(statics) or hitList(activables)
+end
+
+------------------------------------------
 -- mob class
 local function Mob(x,y,player)
 	local s={
@@ -243,7 +269,8 @@ local function Mob(x,y,player)
 		if not Collision:CheckSolid(tl) and not
 				 Collision:CheckSolid(tr) and not
 				 Collision:CheckSolid(bl) and not
-				 Collision:CheckSolid(br) then
+				 Collision:CheckSolid(br) and not
+				 ItemBlocked(s,dx,dy,nx,ny) then
 			s.x=nx
 			s.y=ny
 			-- if not s.damaged then s.curAnim=s.anims.walk end
@@ -317,9 +344,15 @@ local function Player(x,y)
 		-- default: idle
 		s.curAnim=s.anims.idle
 		s.Controls()
-		
+
 		-- check environment
 		s.CheckEnv()
+
+		-- allow talking again once we left the npc zone
+		if justTalkedTo and not (math.abs(s.x-justTalkedTo.x)<2*CELL
+				 and math.abs(s.y-justTalkedTo.y)<2*CELL) then
+			justTalkedTo=nil
+		end
 	end
 	
 	function s.Controls()
@@ -353,8 +386,12 @@ local function Player(x,y)
 		for i,activable in pairs(activables) do
 			-- collision detected
 			if math.abs(s.x-activable.x)<2*CELL and math.abs(s.y-activable.y)<2*CELL then
-				-- call attached callback
-				activable.cb(activable.param)
+				-- skip current npc so the dialogue can be closed at contact
+				if activable~=justTalkedTo then
+					justTalkedTo=activable
+					-- call attached callback
+					activable.cb(activable.param)
+				end
 			end
 		end
 	end
