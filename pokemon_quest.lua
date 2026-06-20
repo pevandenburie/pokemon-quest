@@ -360,19 +360,17 @@ local function Player(x,y)
 		-- arrows [0,1,2,3].......movement
 		-- z [4].........................attack
 		-- x [5].........................healing
-		if btn(c.UP) then 
+		-- one axis at a time: no diagonal movement
+		if btn(c.UP) then
 			s.facing=c.UP
 			s.Move(0,-1,s.anims.walkUp)
-		end
-		if btn(c.DOWN) then 
+		elseif btn(c.DOWN) then
 			s.facing=c.DOWN
 			s.Move(0,1,s.anims.walkDown)
-		end
-		if btn(c.LEFT) then 
+		elseif btn(c.LEFT) then
 			s.facing=c.LEFT
 			s.Move(-1,0,s.anims.walkLeft)
-		end
-		if btn(c.RIGHT) then
+		elseif btn(c.RIGHT) then
 			s.facing=c.RIGHT
 			s.Move(1,0,s.anims.walkRight)
 		end
