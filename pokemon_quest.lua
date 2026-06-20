@@ -506,13 +506,15 @@ local fightStates={
 	SELECT=1,
 	ATTACK=2,
 	P2_SELECT=3,
-	P2_ATTACK=4
+	P2_ATTACK=4,
+	OVER=5
 }
 
 local curFight={
 	state=fightStates.INIT,
 	pk1=nil,
-	pk2=nil
+	pk2=nil,
+	victory=false
 }
 
 local function PrintCentered(s,x,y,BOX_W,c)
@@ -560,9 +562,32 @@ local function Attack_cb(attack)
 	pk_d.ReceiveAttack(attack,pk_a)
 end
 
+-- Remove the static map item whose callback param is the given pokemon.
+local function RemoveStaticPokemon(pk)
+	for i,static in pairs(statics) do
+		if static.param==pk then
+			table.remove(statics,i)
+			return
+		end
+	end
+end
+
+-- Cleanly leave the fight and reset the state machine so that the next
+-- battle starts again from INIT. On a win, the defeated wild pokemon is
+-- removed from the map. PV are NOT restored: damage persists across fights.
+local function EndFight()
+	if curFight.victory and curFight.pk2 then
+		RemoveStaticPokemon(curFight.pk2)
+	end
+	figthPk=nil
+	selected=1
+	curFight.victory=false
+	curFight.state=fightStates.INIT
+end
+
 local function FightExit_cb(selectable)
 	trace("Retraite")
-	figthPk=nil
+	EndFight()
 end
 
 local function FightPokemonBox(pk,x,y,w)
@@ -675,26 +700,46 @@ local function Fight(pk1,pk2)
 			-- clear message if any
 			fightMsgBox.Clear()
 			fightSelectables[selected].selected=false
-			-- Now is computer Pokemon turn to attack!
-			curFight.state=fightStates.P2_SELECT
+			if curFight.pk2.curPv<=0 then
+				-- enemy is KO: player wins
+				fightMsgBox.Push(curFight.pk2.name .. " est K.O. !",60*5)
+				curFight.victory=true
+				curFight.state=fightStates.OVER
+			else
+				-- Now is computer Pokemon turn to attack!
+				curFight.state=fightStates.P2_SELECT
+			end
 		end
-		
+
 	elseif curFight.state==fightStates.P2_SELECT then
 		-- trace ('P2_SELECT')
 		pk2box.selectables[1].selected=true
 		curFight.state=fightStates.P2_ATTACK
 		pk2box.selectables[1].Call()
-		
+
 	elseif curFight.state==fightStates.P2_ATTACK then
 		-- trace ('P2_ATTACK')
 		if btnp(c.z) then
 			-- clear message if any
 			fightMsgBox.Clear()
 			pk2box.selectables[1].selected=false
-			-- Now is player Pokemon turn to attack!
-			selected=1
-			fightSelectables[selected].selected=true
-			curFight.state=fightStates.SELECT
+			if curFight.pk1.curPv<=0 then
+				-- player pokemon is KO: player loses
+				fightMsgBox.Push(curFight.pk1.name .. " est K.O. !",60*5)
+				curFight.state=fightStates.OVER
+			else
+				-- Now is player Pokemon turn to attack!
+				selected=1
+				fightSelectables[selected].selected=true
+				curFight.state=fightStates.SELECT
+			end
+		end
+
+	elseif curFight.state==fightStates.OVER then
+		-- fight finished: wait for confirmation then leave the battle
+		if btnp(c.z) then
+			fightMsgBox.Clear()
+			EndFight()
 		end
 	end
 
