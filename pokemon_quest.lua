@@ -79,12 +79,33 @@ end
 
 ------------------------------------------
 -- Message Box class
+-- wrap text to pixel width, keeping existing newlines
+local function WrapText(text,maxw)
+	local lines={}
+	for raw in (text.."\n"):gmatch("(.-)\n") do
+		local cur=""
+		for word in raw:gmatch("%S+") do
+			local try=cur=="" and word or cur.." "..word
+			if print(try,0,-6)<=maxw then
+				cur=try
+			else
+				if cur~="" then table.insert(lines,cur) end
+				cur=word
+			end
+		end
+		table.insert(lines,cur)
+	end
+	return lines
+end
+
 local function MessageBox(x,y,w,h)
 	local BOX_X=0
 	local BOX_Y=12*CELL
 	local BOX_W=CAM_W-2*BOX_X
 	local BOX_H=CAM_H-BOX_Y
 	local MSG_TIMEOUT=60*3
+	local PAD=4
+	local LINE_H=8
 
 	local box={
 		x=x or BOX_X,
@@ -92,41 +113,67 @@ local function MessageBox(x,y,w,h)
 		w=w or BOX_W,
 		h=h or BOX_H,
 		msg=nil,
+		lines=nil,
+		scroll=1,
 		timeout=MSG_TIMEOUT,
 	}
 
-	function box.Push(msg, timeout)
-		trace("to display:")
-		trace(msg)
+	function box.VisibleLines()
+		return (box.h-2*PAD)//LINE_H
+	end
+
+	-- timeout nil => stays until closed
+	function box.Push(msg,timeout)
 		if msg~=nil then
 			box.msg=msg
-			box.timeout=timeout or MSG_TIMEOUT
+			box.lines=WrapText(msg,box.w-2*PAD-4)
+			box.scroll=1
+			box.timeout=timeout
 		end
+	end
+
+	function box.ScrollUp()
+		if box.scroll>1 then box.scroll=box.scroll-1 end
+	end
+
+	function box.ScrollDown()
+		local maxs=#box.lines-box.VisibleLines()+1
+		if box.scroll<maxs then box.scroll=box.scroll+1 end
 	end
 
 	function box.Display()
 		if box.msg then
-			box.timeout=box.timeout-1
-			if box.timeout<=0 then
-				box.Clear()
-			else
-				box.Draw()
+			if box.timeout~=nil then
+				box.timeout=box.timeout-1
+				if box.timeout<=0 then box.Clear() return end
 			end
+			box.Draw()
 		end
 	end
-	
+
 	function box.Draw()
 		rect(box.x,box.y,box.w,box.h,15)
 		rectb(box.x+2,box.y+2,box.w-4,box.h-4,0)
-		if box.msg then
-			local width=print(box.msg,0,-6)
-			print(box.msg,(box.w-width)//2,(box.y+(box.h-6)//2),0)
+		if not box.lines then return end
+		local vis=box.VisibleLines()
+		for i=0,vis-1 do
+			local line=box.lines[box.scroll+i]
+			if line then print(line,box.x+PAD+2,box.y+PAD+i*LINE_H,0) end
+		end
+		-- scroll arrows
+		local cx=box.x+box.w-7
+		if box.scroll>1 then tri(cx,box.y+4,cx-3,box.y+8,cx+3,box.y+8,0) end
+		if box.scroll+vis-1<#box.lines then
+			local by=box.y+box.h-4
+			tri(cx,by,cx-3,by-4,cx+3,by-4,0)
 		end
 	end
 
 	function box.Clear()
 		box.msg=nil
-		timeout=MSG_TIMEOUT
+		box.lines=nil
+		box.scroll=1
+		box.timeout=MSG_TIMEOUT
 	end
 
 	return box
@@ -807,7 +854,8 @@ end
 
 
 local function PushMsg_Cb(msg)
-	msgBox.Push(msg, 60)
+	-- no timeout: stays until closed with Z
+	msgBox.Push(msg)
 end
 
 local function SpawnSign(cellX,cellY,msg)
@@ -838,7 +886,7 @@ local function Init()
 	SpawnSign(15,6,"Ze Matuto")
 
 	-- Add Characters
-	SpawnCharacter(19,14,"Ola!")
+	SpawnCharacter(19,14,"Ola! Bienvenue dans cette quete Pokemon. Le monde regorge de creatures sauvages a capturer et a entrainer. Utilise les fleches HAUT et BAS pour faire defiler ce long message, puis Z pour fermer la fenetre de dialogue. Bonne chance dresseur !")
 
 	-- Add Pokemons
 	SpawnPokemon(17,14,Pokemon(POKEDEX.PIKACHU))
@@ -869,13 +917,13 @@ function TIC()
 	if figthPk then
 		Fight(p1.pk,figthPk)
 	
-	elseif msgBox.msg then	
-		-- Show message if needed
+	elseif msgBox.msg then
+		-- Show message, scroll with UP/DOWN, close with Z
 		msgBox.Display()
 
-		if btnp(c.z) then
-			msgBox.Clear()
-		end
+		if btnp(c.UP,20,4) then msgBox.ScrollUp() end
+		if btnp(c.DOWN,20,4) then msgBox.ScrollDown() end
+		if btnp(c.z) then msgBox.Clear() end
 	else
 
 	-- reset the game if the player is died and is pressed x
