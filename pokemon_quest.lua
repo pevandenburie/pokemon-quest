@@ -395,9 +395,8 @@ local function Player(x,y)
 		-- check environment
 		s.CheckEnv()
 
-		-- allow talking again once we left the npc zone
-		if justTalkedTo and not (math.abs(s.x-justTalkedTo.x)<2*CELL
-				 and math.abs(s.y-justTalkedTo.y)<2*CELL) then
+		-- allow talking again once we no longer face/touch that npc
+		if justTalkedTo and s.FacingActivable()~=justTalkedTo then
 			justTalkedTo=nil
 		end
 	end
@@ -427,17 +426,28 @@ local function Player(x,y)
 		end
 	end
 
-	function s.CheckActivable()
-		for i,activable in pairs(activables) do
-			-- collision detected
-			if math.abs(s.x-activable.x)<2*CELL and math.abs(s.y-activable.y)<2*CELL then
-				-- skip current npc so the dialogue can be closed at contact
-				if activable~=justTalkedTo then
-					justTalkedTo=activable
-					-- call attached callback
-					activable.cb(activable.param)
-				end
+	-- activable we are facing AND stuck to (adjacent), else nil
+	function s.FacingActivable()
+		for i,a in pairs(activables) do
+			local dx=a.x-s.x
+			local dy=a.y-s.y
+			local hit=false
+			if s.facing==c.UP then hit=dy<0 and -dy<=2*CELL and math.abs(dx)<CELL
+			elseif s.facing==c.DOWN then hit=dy>0 and dy<=2*CELL and math.abs(dx)<CELL
+			elseif s.facing==c.LEFT then hit=dx<0 and -dx<=2*CELL and math.abs(dy)<CELL
+			elseif s.facing==c.RIGHT then hit=dx>0 and dx<=2*CELL and math.abs(dy)<CELL
 			end
+			if hit then return a end
+		end
+		return nil
+	end
+
+	function s.CheckActivable()
+		local a=s.FacingActivable()
+		-- skip current npc so the dialogue can be closed while still in contact
+		if a and a~=justTalkedTo then
+			justTalkedTo=a
+			a.cb(a.param)
 		end
 	end
 
@@ -886,7 +896,7 @@ local function Init()
 	SpawnSign(15,6,"Ze Matuto")
 
 	-- Add Characters
-	SpawnCharacter(19,14,"Ola! Bienvenue dans cette quete Pokemon. Le monde regorge de creatures sauvages a capturer et a entrainer. Utilise les fleches HAUT et BAS pour faire defiler ce long message, puis Z pour fermer la fenetre de dialogue. Bonne chance dresseur !")
+	SpawnCharacter(19,14,"Ola! Je suis Ze Matuto. Veux-tu me defier?")
 
 	-- Add Pokemons
 	SpawnPokemon(17,14,Pokemon(POKEDEX.PIKACHU))
@@ -905,7 +915,8 @@ local function Init()
 		end
 	end
 
-	-- msgBox.Push("Bienvenue dans cette quete Pokemon!")
+	-- message d'accueil au demarrage
+	msgBox.Push("Ola! Bienvenue dans cette quete Pokemon. Le monde regorge de creatures sauvages a capturer et a entrainer. Utilise les fleches HAUT et BAS pour faire defiler ce long message, puis Z pour fermer la fenetre de dialogue. Bonne chance dresseur !")
 end
 
 ------------------------------------------				
@@ -914,57 +925,38 @@ function TIC()
 	-- runs only the first time or to reset the game
 	Init()
 	
+	-- fight has its own full-screen rendering
 	if figthPk then
 		Fight(p1.pk,figthPk)
-	
-	elseif msgBox.msg then
-		-- Show message, scroll with UP/DOWN, close with Z
-		msgBox.Display()
+		return
+	end
 
+	if msgBox.msg then
+		-- a message is shown: handle its input, freeze the world
+		-- (handled before update so opening and closing never share a frame)
 		if btnp(c.UP,20,4) then msgBox.ScrollUp() end
 		if btnp(c.DOWN,20,4) then msgBox.ScrollDown() end
 		if btnp(c.z) then msgBox.Clear() end
 	else
+		-- update the world
+		for i,static in pairs(statics) do static.Update(t) end
+		for i,activable in pairs(activables) do activable.Update(t) end
+		for i,mob in pairs(mobs) do mob.Update(t) end
+		p1.Update(t)
+		t=t+1
+	end
 
-	-- reset the game if the player is died and is pressed x
-	-- if btn(5) and p1.died then firstRun=true end
-	-- if btn(5) and boss.died then firstRun=true end
-	
-	-- set the camera and draw the background
+	-- always draw the game screen
 	cam.x=p1.x-p1.x%(CAM_W-CELL)
 	cam.y=p1.y-p1.y%(CAM_H-CELL)
-	-- cls(3)
 	map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL)
-	-- map(cam.x/CELL,cam.y/CELL,CAM_W/CELL,CAM_H/CELL,0,0,-1,2)
-
-	------------- UPDATE -------------
-	-- statics
-	for i,static in pairs(statics) do static.Update(t) end
-	-- activable statics
-	for i,activable in pairs(activables) do activable.Update(t) end
-	-- mobs
-	for i,mob in pairs(mobs) do mob.Update(t) end
-	
-	-- player
-	p1.Update(t)
-	
-	------------- DISPLAY -------------
-	-- statics
-	for i,statics in pairs(statics) do statics.Display(t) end
-	-- activable statics
+	for i,static in pairs(statics) do static.Display(t) end
 	for i,activable in pairs(activables) do activable.Display(t) end
-	-- mobs
 	for i,mob in pairs(mobs) do mob.Display(t) end
-	-- player
 	p1.Display(t)
 
-	-- Show message if needed
-	-- msgBox.Display()
-
-	-- increment global time
-	t=t+1
-
-	end
+	-- overlay the message box on top of the game screen
+	if msgBox.msg then msgBox.Display() end
 end
 -- <TILES>
 -- 000:4444444444444444444444444445444444444444444445444444444444444444
